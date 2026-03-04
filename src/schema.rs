@@ -37,7 +37,7 @@ where
         .map(Into::into)
         .or_else(|_| {
             NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT:%H:%M:%S%.fZ")
-                .map(|d| DateTime::from_utc(d, Utc))
+                .map(|d| DateTime::from_naive_utc_and_offset(d, Utc))
         })
         .or_else(|_| DateTime::parse_from_str(&s, "%Y-%m-%dT:%H:%M:%S%.f%z").map(Into::into))
         .map_err(serde::de::Error::custom)
