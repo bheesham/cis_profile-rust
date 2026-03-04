@@ -6,7 +6,6 @@ use chrono::NaiveDateTime;
 use chrono::SecondsFormat;
 use chrono::Utc;
 use dino_park_trust::Trust;
-use lazy_static::lazy_static;
 use serde::Deserializer;
 use serde::Serializer;
 use serde_derive::Deserialize;
@@ -21,10 +20,6 @@ use juniper::{GraphQLEnum, GraphQLObject, ParseScalarValue};
 #[cfg(feature = "graphql")]
 use std::iter::FromIterator;
 
-lazy_static! {
-    static ref ZERO: DateTime<Utc> =
-        DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
-}
 pub fn serialize_datetime<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -42,7 +37,7 @@ where
         .map(Into::into)
         .or_else(|_| {
             NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT:%H:%M:%S%.fZ")
-                .map(|d| DateTime::from_utc(d, Utc))
+                .map(|d| DateTime::from_naive_utc_and_offset(d, Utc))
         })
         .or_else(|_| DateTime::parse_from_str(&s, "%Y-%m-%dT:%H:%M:%S%.f%z").map(Into::into))
         .map_err(serde::de::Error::custom)
@@ -106,24 +101,19 @@ pub enum Alg {
 
 /// Data classification for fields.
 #[cfg_attr(feature = "graphql", derive(GraphQLEnum))]
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, Default, PartialEq, Debug, Deserialize, Serialize)]
 pub enum Classification {
     #[serde(rename = "MOZILLA CONFIDENTIAL")]
     MozillaConfidential,
     #[serde(rename = "WORKGROUP CONFIDENTIAL: STAFF ONLY")]
     WorkgroupConfidentialStaffOnly,
     #[serde(rename = "WORKGROUP CONFIDENTIAL")]
+    #[default]
     WorkgroupConfidential,
     #[serde(rename = "PUBLIC")]
     Public,
     #[serde(rename = "INDIVIDUAL CONFIDENTIAL")]
     IndividualConfidential,
-}
-
-impl Default for Classification {
-    fn default() -> Self {
-        Classification::WorkgroupConfidential
-    }
 }
 
 /// Display level for fields. This reflects a users preference and may overrule data classification
@@ -211,9 +201,9 @@ impl Metadata {
     fn with(display: Option<Display>, classification: Classification) -> Self {
         Metadata {
             classification,
-            created: *ZERO,
+            created: DateTime::UNIX_EPOCH,
             display,
-            last_modified: *ZERO,
+            last_modified: DateTime::UNIX_EPOCH,
             verified: false,
         }
     }

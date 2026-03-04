@@ -1,6 +1,6 @@
 [package]
 name = "cis_profile"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["Florian Merz <me@fiji-flo.de>"]
 edition = "2018"
 license = "MIT"
@@ -19,7 +19,7 @@ well_known = ["reqwest"]
 vendored = ["openssl/vendored"]
 
 [dependencies]
-dino_park_trust = { git = "https://github.com/mozilla-iam/dino-park-trust", branch = "0.1", version = "0.1" }
+dino_park_trust = { git = "https://github.com/mozilla-iam/dino-park-trust", tag = "0.1.1", version = "0.1.1" }
 biscuit = "0.5"
 ring = "0.16"
 openssl = "0.10"
@@ -27,10 +27,9 @@ num-bigint = "0.3"
 serde = "1.0.80"
 serde_derive = "1.0.80"
 serde_json = { version = "1.0.32", features = ["preserve_order"] }
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.38", features = ["serde"] }
 chrono-tz = "0.6"
 thiserror = "1"
-lazy_static = "1"
 futures = "0.3"
 
 juniper = { version = "0.15", optional = true }
