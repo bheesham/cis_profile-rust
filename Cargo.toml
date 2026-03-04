@@ -30,7 +30,6 @@ serde_json = { version = "1.0.32", features = ["preserve_order"] }
 chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.6"
 thiserror = "1"
-lazy_static = "1"
 futures = "0.3"
 
 juniper = { version = "0.15", optional = true }

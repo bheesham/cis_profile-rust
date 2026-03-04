@@ -6,7 +6,6 @@ use chrono::NaiveDateTime;
 use chrono::SecondsFormat;
 use chrono::Utc;
 use dino_park_trust::Trust;
-use lazy_static::lazy_static;
 use serde::Deserializer;
 use serde::Serializer;
 use serde_derive::Deserialize;
@@ -21,10 +20,6 @@ use juniper::{GraphQLEnum, GraphQLObject, ParseScalarValue};
 #[cfg(feature = "graphql")]
 use std::iter::FromIterator;
 
-lazy_static! {
-    static ref ZERO: DateTime<Utc> =
-        DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc);
-}
 pub fn serialize_datetime<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -211,9 +206,9 @@ impl Metadata {
     fn with(display: Option<Display>, classification: Classification) -> Self {
         Metadata {
             classification,
-            created: *ZERO,
+            created: DateTime::UNIX_EPOCH,
             display,
-            last_modified: *ZERO,
+            last_modified: DateTime::UNIX_EPOCH,
             verified: false,
         }
     }
