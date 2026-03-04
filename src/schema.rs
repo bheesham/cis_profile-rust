@@ -101,24 +101,19 @@ pub enum Alg {
 
 /// Data classification for fields.
 #[cfg_attr(feature = "graphql", derive(GraphQLEnum))]
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, Default, PartialEq, Debug, Deserialize, Serialize)]
 pub enum Classification {
     #[serde(rename = "MOZILLA CONFIDENTIAL")]
     MozillaConfidential,
     #[serde(rename = "WORKGROUP CONFIDENTIAL: STAFF ONLY")]
     WorkgroupConfidentialStaffOnly,
     #[serde(rename = "WORKGROUP CONFIDENTIAL")]
+    #[default]
     WorkgroupConfidential,
     #[serde(rename = "PUBLIC")]
     Public,
     #[serde(rename = "INDIVIDUAL CONFIDENTIAL")]
     IndividualConfidential,
-}
-
-impl Default for Classification {
-    fn default() -> Self {
-        Classification::WorkgroupConfidential
-    }
 }
 
 /// Display level for fields. This reflects a users preference and may overrule data classification
