@@ -14,6 +14,7 @@ use serde_json::to_value;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
+use std::marker::PhantomData;
 
 #[cfg(feature = "graphql")]
 use juniper::{GraphQLEnum, GraphQLObject, ParseScalarValue};
@@ -58,6 +59,64 @@ pub trait WithPublisher {
 /// We only support String → String dictionaries for now.
 #[derive(Default, Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct KeyValue(pub BTreeMap<String, Option<String>>);
+
+/// CIS encodes some KeyValue pairs as:
+///
+/// * undefined/null, in which case we're done (visit_none);
+/// * either a (visit_some):
+///     * empty list, meaning none (visit_seq); or a
+///     * a map, the value we want (visit_map).
+///
+/// From: https://serde.rs/string-or-struct.html
+fn deserialize_keyvalue<'de, D>(de: D) -> Result<Option<KeyValue>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::Deserialize;
+
+    struct MaybeKeyVal(PhantomData<fn() -> Option<KeyValue>>);
+    impl<'de> serde::de::Visitor<'de> for MaybeKeyVal {
+        type Value = Option<KeyValue>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(
+                formatter,
+                "expected a map, an empty sequence, or null/undefined/None"
+            )
+        }
+
+        fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::MapAccess<'de>,
+        {
+            let inner = BTreeMap::deserialize(serde::de::value::MapAccessDeserializer::new(map))?;
+            Ok(Some(KeyValue(inner)))
+        }
+
+        fn visit_seq<A>(self, _: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            Ok(None)
+        }
+
+        fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            deserializer.deserialize_any(MaybeKeyVal(PhantomData))
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            Ok(None)
+        }
+    }
+
+    de.deserialize_option(MaybeKeyVal(PhantomData))
+}
 
 #[cfg(feature = "graphql")]
 #[juniper::graphql_scalar(name = "KeyValue")]
@@ -420,6 +479,7 @@ pub enum Typ {
 pub struct AccessInformationProviderSubObject {
     pub metadata: Metadata,
     pub signature: Signature,
+    #[serde(deserialize_with = "deserialize_keyvalue")]
     pub values: Option<KeyValue>,
 }
 
