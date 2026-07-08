@@ -777,8 +777,13 @@ mod test {
     #[test]
     fn test_fake_profile() {
         let p = include_str!("../data/user_profile_null.json");
-        let profile: Result<Profile, _> = serde_json::from_str(p);
-        assert!(profile.is_ok());
+        serde_json::from_str::<Profile>(p).expect("to parse");
+    }
+
+    #[test]
+    fn test_empty_profile() {
+        let p = include_str!("../data/user_profile_empty.json");
+        serde_json::from_str::<Profile>(p).expect("to parse");
     }
 
     #[test]
@@ -791,12 +796,13 @@ mod test {
     #[test]
     fn test_partial_profile() {
         let p = include_str!("../data/user_profile_partial.json");
-        let profile: Result<Profile, _> = serde_json::from_str(p);
-        assert!(profile.is_ok());
-        assert_eq!(
-            profile.unwrap().primary_username.value,
-            Some(String::from("fiji"))
-        );
+        let profile = serde_json::from_str::<Profile>(p).expect("to parse");
+        assert_eq!(profile.primary_username.value, Some(String::from("fiji")));
+        let expected_ldap_groups = Some(KeyValue(BTreeMap::from([(
+            "example".into(),
+            Some("".into()),
+        )])));
+        assert_eq!(profile.access_information.ldap.values, expected_ldap_groups);
     }
 
     #[test]
